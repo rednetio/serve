@@ -85,17 +85,16 @@ const server = flags.ssl
   ? microHttps(flags.unzipped ? handler : compress(handler))
   : micro(flags.unzipped ? handler : compress(handler))
 
-let port = flags.port
+const port = flags.port
+const serverPath = flags.path
 
-detect(port).then(open => {
-  let inUse = open !== port
+Promise.resolve(serverPath || detect(port)).then(portOrPath => {
+  let inUse = !serverPath && portOrPath !== port
 
   if (inUse) {
-    port = open
-
     inUse = {
-      old: flags.port,
-      open
+      old: port,
+      open: portOrPath
     }
   }
 
@@ -104,9 +103,10 @@ detect(port).then(open => {
     current,
     inUse,
     flags.clipless !== true,
-    flags.open,
+    flags.portOrPath,
+    serverPath,
     flags.ssl
   ]
 
-  server.listen(port, listening.bind(this, ...listenArgs))
+  server.listen(portOrPath, listening.bind(this, ...listenArgs))
 })
